@@ -30,15 +30,13 @@
 @interface AMQPConsumerThread : NSThread
 {
 	AMQPConsumer *consumer;
-	
-	NSObject<AMQPConsumerThreadDelegate> *delegate;
+
+    NSObject<AMQPConsumerThreadDelegate> *delegate;
 }
 
-@property (assign) NSObject<AMQPConsumerThreadDelegate> *delegate;
+@property (strong) NSObject<AMQPConsumerThreadDelegate> *delegate;
 
-- (id)initWithConsumer:(AMQPConsumer*)theConsumer;
-- (void)dealloc;
-
+- (id)initWithConsumer:(AMQPConsumer *)theConsumer delegate:(NSObject <AMQPConsumerThreadDelegate> *)deleGate nameThread:(NSString *)name;
 - (void)main;
 
 @end

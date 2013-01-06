@@ -32,17 +32,17 @@
 	
 	unsigned int nextChannel;
 }
-
+@property (readonly) uint nextChannel_;
 @property (readonly) amqp_connection_state_t internalConnection;
 
 - (id)init;
 - (void)dealloc;
 
-- (void)connectToHost:(NSString*)host onPort:(int)port;
-- (void)loginAsUser:(NSString*)username withPasswort:(NSString*)password onVHost:(NSString*)vhost;
-- (void)disconnect; // all channels have to be closed before closing the connection
+- (BOOL)connectToHost:(NSString*)host onPort:(int)port error:(NSError**)error;
+- (BOOL)loginAsUser:(NSString*)username withPasswort:(NSString*)password onVHost:(NSString*)vhost error:(NSError**)error;
+- (BOOL)disconnectError:(NSError**)error; // all channels have to be closed before closing the connection
 
-- (void)checkLastOperation:(NSString*)context;
+- (BOOL)checkLastOperation:(NSString*)context;
 
 - (AMQPChannel*)openChannel;
 

@@ -24,3 +24,4 @@
 #import "AMQPConsumer.h"
 #import "AMQPConsumerThread.h"
 #import "AMQPMessage.h"
+#import "AMQPRPCCall.h"

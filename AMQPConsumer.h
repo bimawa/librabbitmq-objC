@@ -30,7 +30,7 @@
 {
 	AMQPChannel *channel;
 	AMQPQueue *queue;
-	
+	BOOL isAck;
 	amqp_bytes_t consumer;
 }
 
@@ -38,7 +38,7 @@
 @property (readonly) AMQPChannel *channel;
 @property (readonly) AMQPQueue *queue;
 
-- (id)initForQueue:(AMQPQueue*)theQueue onChannel:(AMQPChannel*)theChannel useAcknowledgements:(BOOL)ack isExclusive:(BOOL)exclusive receiveLocalMessages:(BOOL)local;
+- (id)initForQueue:(AMQPQueue *)theQueue onChannel:(__strong AMQPChannel **)theChannel useAcknowledgements:(BOOL)ack isExclusive:(BOOL)exclusive receiveLocalMessages:(BOOL)local error:(NSError **)error deepLoop:(int)deep;
 - (void)dealloc;
 
 - (AMQPMessage*)pop;

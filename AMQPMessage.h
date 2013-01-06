@@ -87,6 +87,5 @@
 
 - (id)initWithBody:(amqp_bytes_t)theBody withDeliveryProperties:(amqp_basic_deliver_t*)theDeliveryProperties withMessageProperties:(amqp_basic_properties_t*)theMessageProperties receivedAt:(NSDate*)receiveTimestamp;
 - (id)initWithAMQPMessage:(AMQPMessage*)theMessage;
-- (void)dealloc;
 
 @end

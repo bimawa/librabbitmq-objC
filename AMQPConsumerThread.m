@@ -22,41 +22,46 @@
 #import "AMQPConsumer.h"
 #import "AMQPMessage.h"
 
-@implementation AMQPConsumerThread
+@implementation AMQPConsumerThread{
+    NSString *nameThread;
+
+}
 
 @synthesize delegate;
 
-- (id)initWithConsumer:(AMQPConsumer *)theConsumer
-{
-	if(self = [super init])
+- (id)initWithConsumer:(AMQPConsumer *)theConsumer delegate:(NSObject <AMQPConsumerThreadDelegate> *)deleGate nameThread:(NSString *)name {
+    if(self = [super init])
 	{
-		consumer = [theConsumer retain];
+		consumer = theConsumer;
+        nameThread=name;
+        [self setDelegate:deleGate];
 	}
-	
 	return self;
-}
-- (void)dealloc
-{
-	[consumer release];
-	
-	[super dealloc];
 }
 
 - (void)main
 {
-	NSAutoreleasePool *localPool;
-	
-	while(![self isCancelled])
+    [[NSThread currentThread] setName:nameThread];
+    if ([self isCancelled]) {
+        NSLog(@"Thread %@ is cancel.", [NSThread currentThread]);
+    }
+    int countTry=3;
+    while(![self isCancelled])
 	{
-		localPool = [[NSAutoreleasePool alloc] init];
-		
-		AMQPMessage *message = [consumer pop];
-		if(message)
-		{
-			[delegate performSelectorOnMainThread:@selector(amqpConsumerThreadReceivedNewMessage:) withObject:message waitUntilDone:NO];
-		}
-		
-		[localPool drain];
+        AMQPMessage *message = [consumer pop];
+		if(message) {
+            [delegate performSelector:@selector(amqpConsumerThreadReceivedNewMessage:) withObject:message];
+        }else {
+            countTry--;
+            if (countTry==0){
+
+                NSLog(@"Consumer lose Connection: %@",[NSThread currentThread]);
+//                [delegate performSelector:@selector(amqpConsumerThreadLoseConnection) withObject:nil];
+                [NSThread exit];
+            }
+            NSLog(@"NO messsage for consumer: %@",[NSThread currentThread]);
+            [NSThread sleepForTimeInterval:5];
+        }
 	}
 }
 

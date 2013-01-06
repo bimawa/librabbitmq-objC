@@ -27,17 +27,16 @@
 
 @interface AMQPChannel : AMQPObject
 {
+	@public
 	amqp_channel_t channel;
 	AMQPConnection *connection;
 }
 
 @property (readonly) amqp_channel_t internalChannel;
-@property (readonly) AMQPConnection *connection;
+@property (readonly, retain) AMQPConnection *connection;
 
 - (id)init;
-- (void)dealloc;
-
-- (void)openChannel:(unsigned int)theChannel onConnection:(AMQPConnection*)theConnection;
+- (BOOL)openChannel:(unsigned int)theChannel onConnection:(AMQPConnection*)theConnection error:(NSError**)error;
 - (void)close;
-
++(void)closeChanelByNumber:(uint)channelNum connection:(AMQPConnection *)connect;
 @end

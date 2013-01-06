@@ -56,41 +56,41 @@
 {
 	AMQPMessage *message = [[AMQPMessage alloc] initWithBody:theBody withDeliveryProperties:theDeliveryProperties withMessageProperties:theMessageProperties receivedAt:receiveTimestamp];
 	
-	return [message autorelease];
+	return message;
 }
 
 - (id)initWithBody:(amqp_bytes_t)theBody withDeliveryProperties:(amqp_basic_deliver_t*)theDeliveryProperties withMessageProperties:(amqp_basic_properties_t*)theMessageProperties receivedAt:(NSDate*)receiveTimestamp
 {
 	if(!theDeliveryProperties || !theMessageProperties) { return nil; }
 	
-	if(self = [super init])
-	{
-		body = AMQP_BYTES_TO_NSSTRING(theBody);
-		
-		consumerTag = AMQP_BYTES_TO_NSSTRING(theDeliveryProperties->consumer_tag);
-		deliveryTag = theDeliveryProperties->delivery_tag;
-		redelivered = theDeliveryProperties->redelivered;
-		exchangeName = AMQP_BYTES_TO_NSSTRING(theDeliveryProperties->exchange);
-		routingKey = AMQP_BYTES_TO_NSSTRING(theDeliveryProperties->routing_key);
-		
-		if(theMessageProperties->_flags & AMQP_BASIC_CONTENT_TYPE_FLAG) { contentType = AMQP_BYTES_TO_NSSTRING(theMessageProperties->content_type); } else { contentType = nil; }
-		if(theMessageProperties->_flags & AMQP_BASIC_CONTENT_ENCODING_FLAG) { contentEncoding = AMQP_BYTES_TO_NSSTRING(theMessageProperties->content_encoding); } else { contentEncoding = nil; }
-		if(theMessageProperties->_flags & AMQP_BASIC_HEADERS_FLAG) { headers = theMessageProperties->headers; } else { headers = AMQP_EMPTY_TABLE; }
-		if(theMessageProperties->_flags & AMQP_BASIC_DELIVERY_MODE_FLAG) { deliveryMode = theMessageProperties->delivery_mode; } else { deliveryMode = 0; }
-		if(theMessageProperties->_flags & AMQP_BASIC_PRIORITY_FLAG) { priority = theMessageProperties->priority; } else { priority = 0; }
-		if(theMessageProperties->_flags & AMQP_BASIC_CORRELATION_ID_FLAG) { correlationID = AMQP_BYTES_TO_NSSTRING(theMessageProperties->correlation_id); } else { correlationID = nil; }
-		if(theMessageProperties->_flags & AMQP_BASIC_REPLY_TO_FLAG) { replyToQueueName = AMQP_BYTES_TO_NSSTRING(theMessageProperties->reply_to); } else { replyToQueueName = nil; }
-		if(theMessageProperties->_flags & AMQP_BASIC_EXPIRATION_FLAG) { expiration = AMQP_BYTES_TO_NSSTRING(theMessageProperties->expiration); } else { expiration = nil; }
-		if(theMessageProperties->_flags & AMQP_BASIC_MESSAGE_ID_FLAG) { messageID = AMQP_BYTES_TO_NSSTRING(theMessageProperties->message_id); } else { messageID = nil; }
-		if(theMessageProperties->_flags & AMQP_BASIC_TIMESTAMP_FLAG) { timestamp = theMessageProperties->timestamp; } else { timestamp = 0; }
-		if(theMessageProperties->_flags & AMQP_BASIC_TYPE_FLAG) { type = AMQP_BYTES_TO_NSSTRING(theMessageProperties->type); } else { type = nil; }
-		if(theMessageProperties->_flags & AMQP_BASIC_USER_ID_FLAG) { userID = AMQP_BYTES_TO_NSSTRING(theMessageProperties->user_id); } else { userID = nil; }
-		if(theMessageProperties->_flags & AMQP_BASIC_APP_ID_FLAG) { appID = AMQP_BYTES_TO_NSSTRING(theMessageProperties->app_id); } else { appID = nil; }
-		if(theMessageProperties->_flags & AMQP_BASIC_CLUSTER_ID_FLAG) { clusterID = AMQP_BYTES_TO_NSSTRING(theMessageProperties->cluster_id); } else { clusterID = nil; }
-		
-		read = NO;
-		receivedAt = [receiveTimestamp copy];
-	}
+	if(self = [super init]) {
+
+        body = AMQP_BYTES_TO_NSSTRING(theBody);
+        //body=[[NSString alloc] initWithBytes:theBody.bytes length:x.len encoding:NSWindowsCP1251StringEncoding];
+        consumerTag = AMQP_BYTES_TO_NSSTRING(theDeliveryProperties->consumer_tag);
+        deliveryTag = theDeliveryProperties->delivery_tag;
+        redelivered = theDeliveryProperties->redelivered;
+        exchangeName = AMQP_BYTES_TO_NSSTRING(theDeliveryProperties->exchange);
+        routingKey = AMQP_BYTES_TO_NSSTRING(theDeliveryProperties->routing_key);
+
+        if (theMessageProperties->_flags & AMQP_BASIC_CONTENT_TYPE_FLAG) {contentType = AMQP_BYTES_TO_NSSTRING(theMessageProperties->content_type);} else {contentType = nil;}
+        if (theMessageProperties->_flags & AMQP_BASIC_CONTENT_ENCODING_FLAG) {contentEncoding = AMQP_BYTES_TO_NSSTRING(theMessageProperties->content_encoding);} else {contentEncoding = nil;}
+        if (theMessageProperties->_flags & AMQP_BASIC_HEADERS_FLAG) {headers = theMessageProperties->headers;} else {headers = AMQP_EMPTY_TABLE;}
+        if (theMessageProperties->_flags & AMQP_BASIC_DELIVERY_MODE_FLAG) {deliveryMode = theMessageProperties->delivery_mode;} else {deliveryMode = 0;}
+        if (theMessageProperties->_flags & AMQP_BASIC_PRIORITY_FLAG) {priority = theMessageProperties->priority;} else {priority = 0;}
+        if (theMessageProperties->_flags & AMQP_BASIC_CORRELATION_ID_FLAG) {correlationID = AMQP_BYTES_TO_NSSTRING(theMessageProperties->correlation_id);} else {correlationID = nil;}
+        if (theMessageProperties->_flags & AMQP_BASIC_REPLY_TO_FLAG) {replyToQueueName = AMQP_BYTES_TO_NSSTRING(theMessageProperties->reply_to);} else {replyToQueueName = nil;}
+        if (theMessageProperties->_flags & AMQP_BASIC_EXPIRATION_FLAG) {expiration = AMQP_BYTES_TO_NSSTRING(theMessageProperties->expiration);} else {expiration = nil;}
+        if (theMessageProperties->_flags & AMQP_BASIC_MESSAGE_ID_FLAG) {messageID = AMQP_BYTES_TO_NSSTRING(theMessageProperties->message_id);} else {messageID = nil;}
+        if (theMessageProperties->_flags & AMQP_BASIC_TIMESTAMP_FLAG) {timestamp = theMessageProperties->timestamp;} else {timestamp = 0;}
+        if (theMessageProperties->_flags & AMQP_BASIC_TYPE_FLAG) {type = AMQP_BYTES_TO_NSSTRING(theMessageProperties->type);} else {type = nil;}
+        if (theMessageProperties->_flags & AMQP_BASIC_USER_ID_FLAG) {userID = AMQP_BYTES_TO_NSSTRING(theMessageProperties->user_id);} else {userID = nil;}
+        if (theMessageProperties->_flags & AMQP_BASIC_APP_ID_FLAG) {appID = AMQP_BYTES_TO_NSSTRING(theMessageProperties->app_id);} else {appID = nil;}
+        if (theMessageProperties->_flags & AMQP_BASIC_CLUSTER_ID_FLAG) {clusterID = AMQP_BYTES_TO_NSSTRING(theMessageProperties->cluster_id);} else {clusterID = nil;}
+
+        read = NO;
+        receivedAt = [receiveTimestamp copy];
+    }
 	
 	return self;
 }
@@ -127,26 +127,7 @@
 	
 	return self;
 }
-- (void)dealloc
-{
-	[body release];
-	[consumerTag release];
-	[exchangeName release];
-	[routingKey release];
-	[contentType release];
-	[contentEncoding release];
-	[correlationID release];
-	[replyToQueueName release];
-	[expiration release];
-	[messageID release];
-	[type release];
-	[userID release];
-	[appID release];
-	[clusterID release];
-	[receivedAt release];
-	
-	[super dealloc];
-}
+
 - (id)copyWithZone:(NSZone*)zone
 {
 	AMQPMessage *newMessage = [[AMQPMessage allocWithZone:zone] initWithAMQPMessage:self];

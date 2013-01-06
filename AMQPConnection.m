@@ -17,6 +17,7 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#import <sys/socket.h>
 #import "AMQPConnection.h"
 
 #import "amqp.h"
@@ -27,7 +28,7 @@
 
 @implementation AMQPConnection
 
-@synthesize internalConnection = connection;
+@synthesize internalConnection = connection,nextChannel_=nextChannel;
 
 - (id)init
 {
@@ -35,69 +36,107 @@
 	{
 		connection = amqp_new_connection();
 		nextChannel = 1;
+
 	}
 	
 	return self;
 }
 - (void)dealloc
 {
-	[self disconnect];
-	
+	NSError *error=nil;
+	[self disconnectError:&error];
+	if(error!=nil){
+		NSLog(@"Error disconnect from server: %@",error);
+		return;
+	}
 	amqp_destroy_connection(connection);
-	
-	[super dealloc];
+
 }
 
-- (void)connectToHost:(NSString*)host onPort:(int)port
+- (BOOL)connectToHost:(NSString*)host onPort:(int)port error:(NSError **)error
 {
-	socketFD = amqp_open_socket([host UTF8String], port);
+
+    socketFD = amqp_open_socket([host UTF8String], port);
 	
 	if(socketFD < 0)
 	{
-		[NSException raise:@"AMQPConnectionException" format:@"Unable to open socket to host %@ on port %d", host, port];
+		NSMutableDictionary *errorDetail = [NSMutableDictionary dictionary];
+		[errorDetail setValue:[NSString stringWithFormat:@"Unable to open socket to host %@ on port %d", host, port] forKey:NSLocalizedDescriptionKey];
+		*error = [NSError errorWithDomain:NSStringFromClass([self class]) code:-4 userInfo:errorDetail];
+		return false;
 	}
+    amqp_set_sockfd(connection, socketFD);
+    return true;
+}
+- (BOOL)loginAsUser:(NSString*)username withPasswort:(NSString*)password onVHost:(NSString*)vhost error:(NSError **)error {
+    if (connection == nil) {
+        NSMutableDictionary *errorDetail = [NSMutableDictionary dictionary];
+        [errorDetail setValue:[NSString stringWithFormat:@"Failed Connection is Lost"] forKey:NSLocalizedDescriptionKey];
+        *error = [NSError errorWithDomain:NSStringFromClass([self class]) code:-14 userInfo:errorDetail];
+        return false;
+    }
+    amqp_rpc_reply_t reply = amqp_login(connection, [vhost UTF8String], 0, 131072, 0, AMQP_SASL_METHOD_PLAIN, [username UTF8String], [password UTF8String]);
 
-	amqp_set_sockfd(connection, socketFD);
+    if (reply.reply_type != AMQP_RESPONSE_NORMAL) {
+        NSMutableDictionary *errorDetail = [NSMutableDictionary dictionary];
+        [errorDetail setValue:[NSString stringWithFormat:@"Failed to login to server as user %@ on vhost %@ using password %@: %@", username, vhost, password, [self errorDescriptionForReply:reply]] forKey:NSLocalizedDescriptionKey];
+        *error = [NSError errorWithDomain:NSStringFromClass([self class]) code:-3 userInfo:errorDetail];
+        return false;
+    }
+
+    return true;
 }
-- (void)loginAsUser:(NSString*)username withPasswort:(NSString*)password onVHost:(NSString*)vhost
+- (BOOL)disconnectError:(NSError **)error
 {
-	amqp_rpc_reply_t reply = amqp_login(connection, [vhost UTF8String], 0, 131072, 0, AMQP_SASL_METHOD_PLAIN, [username UTF8String], [password UTF8String]);
-	
-	if(reply.reply_type != AMQP_RESPONSE_NORMAL)
-	{
-		[NSException raise:@"AMQPLoginException" format:@"Failed to login to server as user %@ on vhost %@ using password %@: %@", username, vhost, password, [self errorDescriptionForReply:reply]];
-	}
-}
-- (void)disconnect
-{
+    if (connection == nil) {
+        NSMutableDictionary *errorDetail = [NSMutableDictionary dictionary];
+        [errorDetail setValue:[NSString stringWithFormat:@"Failed Connection is Lost"] forKey:NSLocalizedDescriptionKey];
+        *error = [NSError errorWithDomain:NSStringFromClass([self class]) code:-14 userInfo:errorDetail];
+        return false;
+    }
 	amqp_rpc_reply_t reply = amqp_connection_close(connection, AMQP_REPLY_SUCCESS);
 	
 	if(reply.reply_type != AMQP_RESPONSE_NORMAL)
 	{
-		[NSException raise:@"AMQPConnectionException" format:@"Unable to disconnect from host: %@", [self errorDescriptionForReply:reply]];
+		NSMutableDictionary *errorDetail = [NSMutableDictionary dictionary];
+		[errorDetail setValue:[NSString stringWithFormat:@"Unable to disconnect from host: %@", [self errorDescriptionForReply:reply]] forKey:NSLocalizedDescriptionKey];
+		*error = [NSError errorWithDomain:NSStringFromClass([self class]) code:-2 userInfo:errorDetail];
+
+        close(socketFD);
+        return false;
 	}
-	
 	close(socketFD);
+	return true;
 }
 
-- (void)checkLastOperation:(NSString*)context
+- (BOOL)checkLastOperation:(NSString*)context
 {
+	BOOL result=false;
+
 	amqp_rpc_reply_t reply = amqp_get_rpc_reply(connection);
 	
 	if(reply.reply_type != AMQP_RESPONSE_NORMAL)
 	{
-		[NSException raise:@"AMQPException" format:@"%@: %@", context, [self errorDescriptionForReply:reply]];
+		result=true;
+		NSLog(@"AMQPException: %@: %@", context, [self errorDescriptionForReply:reply]);
 	}
+	return result;
 }
 
 - (AMQPChannel*)openChannel
 {
-	AMQPChannel *channel = [[AMQPChannel alloc] init];
-	[channel openChannel:nextChannel onConnection:self];
-	
+
+    AMQPChannel *channel = [[AMQPChannel alloc] init];
+	NSError *error=nil;
+	[channel openChannel:nextChannel onConnection:self error:&error];
+	if (error!=nil){
+		NSLog(@"%@",error);
+        nextChannel++;
+		return nil;
+	}
 	nextChannel++;
 
-	return [channel autorelease];
+	return channel;
 }
 
 @end

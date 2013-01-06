@@ -26,6 +26,7 @@
 @class AMQPChannel;
 @class AMQPExchange;
 @class AMQPConsumer;
+@class AMQPMessage;
 
 @interface AMQPQueue : AMQPObject
 {
@@ -36,12 +37,14 @@
 
 @property (readonly) amqp_bytes_t internalQueue;
 
-- (id)initWithName:(NSString*)theName onChannel:(AMQPChannel*)theChannel isPassive:(BOOL)passive isExclusive:(BOOL)exclusive isDurable:(BOOL)durable getsAutoDeleted:(BOOL)autoDelete;
+- (id)initWithName:(NSString*)theName onChannel:(AMQPChannel*)theChannel isPassive:(BOOL)passive isExclusive:(BOOL)exclusive isDurable:(BOOL)durable getsAutoDeleted:(BOOL)autoDelete error:(NSError**)error;
+- (id)initWithName:(NSString*)theName onChannel:(AMQPChannel*)theChannel;//No declare
 - (void)dealloc;
 
-- (void)bindToExchange:(AMQPExchange*)theExchange withKey:(NSString*)bindingKey;
-- (void)unbindFromExchange:(AMQPExchange*)theExchange withKey:(NSString*)bindingKey;
+- (BOOL)bindToExchange:(AMQPExchange*)theExchange withKey:(NSString*)bindingKey error:(NSError**)error;
+- (BOOL)unbindFromExchange:(AMQPExchange*)theExchange withKey:(NSString*)bindingKey error:(NSError**)error;
 
-- (AMQPConsumer*)startConsumerWithAcknowledgements:(BOOL)ack isExclusive:(BOOL)exclusive receiveLocalMessages:(BOOL)local;
+- (void)destroy;
+
 
 @end
