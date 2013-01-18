@@ -14,6 +14,7 @@
 #include "amqp_private.h"
 
 #include <assert.h>
+#include <MacTypes.h>
 
 static const char *client_error_strings[ERROR_MAX] = {
   "could not allocate memory", /* ERROR_NO_MEMORY */
@@ -75,6 +76,7 @@ int amqp_basic_publish(amqp_connection_state_t state,
 {
   amqp_frame_t f;
   size_t body_offset;
+  if (state== nil)return 0;
   size_t usable_body_payload_size = state->frame_max - (HEADER_SIZE + FOOTER_SIZE);
 
   amqp_basic_publish_t m =
