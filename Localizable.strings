@@ -4,3 +4,10 @@
 
 "Failed Connection is Lost" = "Failed Connection is Lost";
 "Failed to login on server." = "Failed to login on server.";
+"Anonymous enter:" = "Anonymous enter:";
+"Registration" = "Registration";
+"Login" = "Login";
+"Registered user:" = "Registered user:";
+"anonymous" = "anonymous";
+"Auth info" = "Auth info";
+"Ok" = "Ok";
