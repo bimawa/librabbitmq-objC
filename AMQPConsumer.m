@@ -75,7 +75,7 @@
 		amqp_maybe_release_buffers(channel.connection.internalConnection);
 		// Frame #1: method frame with method basic.deliver
         result = amqp_simple_wait_frame(channel.connection.internalConnection, &frame);
-        
+
 		
 		if(result < 0) { return nil; }
 		

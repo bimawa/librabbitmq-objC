@@ -135,44 +135,38 @@ amqp_boolean_t amqp_data_in_buffer(amqp_connection_state_t state) {
   return (state->sock_inbound_offset < state->sock_inbound_limit);
 }
 
-static int wait_frame_inner(amqp_connection_state_t state,
-			    amqp_frame_t *decoded_frame)
+static int wait_frame_inner(amqp_connection_state_t state, amqp_frame_t *decoded_frame)
 {
     while (1) {
-    int result;
+        int result;
+        while (amqp_data_in_buffer(state)) {
+            amqp_bytes_t buffer;
+            buffer.len = state->sock_inbound_limit - state->sock_inbound_offset;
+            buffer.bytes = ((char *) state->sock_inbound_buffer.bytes) + state->sock_inbound_offset;
+            AMQP_CHECK_RESULT((result = amqp_handle_input(state, buffer, decoded_frame)));
+            state->sock_inbound_offset += result;
 
-    while (amqp_data_in_buffer(state)) {
-      amqp_bytes_t buffer;
-      buffer.len = state->sock_inbound_limit - state->sock_inbound_offset;
-      buffer.bytes = ((char *) state->sock_inbound_buffer.bytes) + state->sock_inbound_offset;
-      AMQP_CHECK_RESULT((result = amqp_handle_input(state, buffer, decoded_frame)));
-      state->sock_inbound_offset += result;
+            if (decoded_frame->frame_type != 0)
+                    /* Complete frame was read. Return it. */
+                return 0;
 
-      if (decoded_frame->frame_type != 0)
-	/* Complete frame was read. Return it. */
-	return 0;
+            /* Incomplete or ignored frame. Keep processing input. */
+            assert(result != 0);
+        }
+        result = recv(state->sockfd, state->sock_inbound_buffer.bytes,state->sock_inbound_buffer.len, 0);
+        if (result <= 0) {
+          if (result == 0)
+        return -ERROR_CONNECTION_CLOSED;
+          else
+        return -amqp_socket_error();
+        }
 
-      /* Incomplete or ignored frame. Keep processing input. */
-      assert(result != 0);
-    }
-
-    //TODO: Надо с таймаутом разобраться а то в инфинити уходит аппликуха
-    result = recv(state->sockfd, state->sock_inbound_buffer.bytes,state->sock_inbound_buffer.len, 0);
-
-    if (result <= 0) {
-      if (result == 0)
-	return -ERROR_CONNECTION_CLOSED;
-      else
-	return -amqp_socket_error();
-    }
-
-    state->sock_inbound_limit = result;
-    state->sock_inbound_offset = 0;
+        state->sock_inbound_limit = (size_t) result;
+        state->sock_inbound_offset = 0;
   }
 }
 
-int amqp_simple_wait_frame(amqp_connection_state_t state,
-			   amqp_frame_t *decoded_frame)
+int amqp_simple_wait_frame(amqp_connection_state_t state, amqp_frame_t *decoded_frame)
 {
   if (state->first_queued_frame != NULL) {
     amqp_frame_t *f = (amqp_frame_t *) state->first_queued_frame->data;

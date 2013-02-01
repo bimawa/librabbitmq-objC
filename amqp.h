@@ -295,8 +295,7 @@ extern int amqp_send_header_to(amqp_connection_state_t state,
 
 extern amqp_boolean_t amqp_frames_enqueued(amqp_connection_state_t state);
 
-extern int amqp_simple_wait_frame(amqp_connection_state_t state,
-				  amqp_frame_t *decoded_frame);
+extern int amqp_simple_wait_frame(amqp_connection_state_t state, amqp_frame_t *decoded_frame);
 
 extern int amqp_simple_wait_method(amqp_connection_state_t state,
 				   amqp_channel_t expected_channel,

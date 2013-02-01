@@ -58,7 +58,7 @@
 - (BOOL)loginAsUser:(NSString*)username withPasswort:(NSString*)password onVHost:(NSString*)vhost error:(NSError **)error {
     if (connection == nil) {
         NSMutableDictionary *errorDetail = [NSMutableDictionary dictionary];
-        [errorDetail setValue:[NSString stringWithFormat:@"Failed Connection is Lost"] forKey:NSLocalizedDescriptionKey];
+        [errorDetail setValue:[NSString stringWithFormat:NSLocalizedString(@"Failed Connection is Lost", @"Failed Connection is Lost")] forKey:NSLocalizedDescriptionKey];
         *error = [NSError errorWithDomain:NSStringFromClass([self class]) code:-14 userInfo:errorDetail];
         return false;
     }
@@ -66,7 +66,7 @@
 
     if (reply.reply_type != AMQP_RESPONSE_NORMAL) {
         NSMutableDictionary *errorDetail = [NSMutableDictionary dictionary];
-        [errorDetail setValue:[NSString stringWithFormat:@"Failed to login to server as user %@ on vhost %@ using password %@: %@", username, vhost, password, [self errorDescriptionForReply:reply]] forKey:NSLocalizedDescriptionKey];
+        [errorDetail setValue:[NSString stringWithFormat:NSLocalizedString(@"Failed to login on server.", @"Failed to login on server.")] forKey:NSLocalizedDescriptionKey];
         *error = [NSError errorWithDomain:NSStringFromClass([self class]) code:-3 userInfo:errorDetail];
         return false;
     }
@@ -77,7 +77,7 @@
 {
     if (connection == nil) {
         NSMutableDictionary *errorDetail = [NSMutableDictionary dictionary];
-        [errorDetail setValue:[NSString stringWithFormat:@"Failed Connection is Lost"] forKey:NSLocalizedDescriptionKey];
+        [errorDetail setValue:[NSString stringWithFormat:NSLocalizedString(@"Failed Connection is Lost", @"Failed Connection is Lost")] forKey:NSLocalizedDescriptionKey];
         *error = [NSError errorWithDomain:NSStringFromClass([self class]) code:-14 userInfo:errorDetail];
         return false;
     }
