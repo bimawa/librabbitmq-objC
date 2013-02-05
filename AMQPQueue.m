@@ -19,20 +19,19 @@
 {
 	if(self = [super init])
 	{
-        if ((theChannel).connection == nil) {
-            NSMutableDictionary *errorDetail = [NSMutableDictionary dictionary];
-            [errorDetail setValue:[NSString stringWithFormat:@"Failed Connection is Lost"] forKey:NSLocalizedDescriptionKey];
-            *error = [NSError errorWithDomain:NSStringFromClass([self class]) code:-14 userInfo:errorDetail];
-            return false;
-        }
-        amqp_queue_declare_ok_t *declaration = amqp_queue_declare((theChannel).connection.internalConnection, (theChannel).internalChannel, amqp_cstring_bytes([theName UTF8String]), passive, durable, exclusive, autoDelete, AMQP_EMPTY_TABLE);
+        __block int isReadyData=0;
+        __block amqp_queue_declare_ok_t *declaration;
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            declaration = amqp_queue_declare((theChannel).connection.internalConnection, (theChannel).internalChannel, amqp_cstring_bytes([theName UTF8String]), passive, durable, exclusive, autoDelete, AMQP_EMPTY_TABLE);
+            if([channel.connection checkLastOperation:@"Failed to declare queue"]||declaration==nil){
+                NSMutableDictionary *errorDetail = [NSMutableDictionary dictionary];
+                [errorDetail setValue:@"Failed to declare queue" forKey:NSLocalizedDescriptionKey];
+                *error = [NSError errorWithDomain:NSStringFromClass([self class]) code:-8 userInfo:errorDetail];
 
-        if([channel.connection checkLastOperation:@"Failed to declare queue"]||declaration==nil){
-			NSMutableDictionary *errorDetail = [NSMutableDictionary dictionary];
-			[errorDetail setValue:@"Failed to declare queue" forKey:NSLocalizedDescriptionKey];
-			*error = [NSError errorWithDomain:NSStringFromClass([self class]) code:-8 userInfo:errorDetail];
-			return nil;
-		}
+            }
+
+        });
+
 		queueName = amqp_bytes_malloc_dup(declaration->queue);
 		channel =theChannel;
 	}
@@ -55,12 +54,7 @@
 
 - (BOOL)bindToExchange:(AMQPExchange*)theExchange withKey:(NSString*)bindingKey error:(NSError **)error
 {
-    if (channel.connection == nil) {
-        NSMutableDictionary *errorDetail = [NSMutableDictionary dictionary];
-        [errorDetail setValue:[NSString stringWithFormat:@"Failed Connection is Lost"] forKey:NSLocalizedDescriptionKey];
-        *error = [NSError errorWithDomain:NSStringFromClass([self class]) code:-14 userInfo:errorDetail];
-        return false;
-    }
+
 	amqp_queue_bind(channel.connection.internalConnection, channel.internalChannel, queueName, theExchange.internalExchange, amqp_cstring_bytes([bindingKey UTF8String]), AMQP_EMPTY_TABLE);
 	if([channel.connection checkLastOperation:@"Failed to bind queue to exchange"]){
 		NSMutableDictionary *errorDetail = [NSMutableDictionary dictionary];
@@ -72,12 +66,7 @@
 }
 - (BOOL)unbindFromExchange:(AMQPExchange*)theExchange withKey:(NSString*)bindingKey error:(NSError **)error
 {
-    if (channel.connection == nil) {
-        NSMutableDictionary *errorDetail = [NSMutableDictionary dictionary];
-        [errorDetail setValue:[NSString stringWithFormat:@"Failed Connection is Lost"] forKey:NSLocalizedDescriptionKey];
-        *error = [NSError errorWithDomain:NSStringFromClass([self class]) code:-14 userInfo:errorDetail];
-        return false;
-    }
+
 	amqp_queue_unbind(channel.connection.internalConnection, channel.internalChannel, queueName, theExchange.internalExchange, amqp_cstring_bytes([bindingKey UTF8String]), AMQP_EMPTY_TABLE);
 	if([channel.connection checkLastOperation:@"Failed to unbind queue from exchange"]){
 		NSMutableDictionary *errorDetail = [NSMutableDictionary dictionary];
